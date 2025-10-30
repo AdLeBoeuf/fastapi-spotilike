@@ -13,6 +13,14 @@ export function setAuthToken(token: string | null) {
   }
 }
 
+export function getAuthToken(): string | null {
+  if (inMemoryToken) return inMemoryToken;
+  if (isBrowser) {
+    try { return localStorage.getItem('token'); } catch { return null; }
+  }
+  return null;
+}
+
 function buildHeaders(init?: HeadersInit): HeadersInit {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -25,7 +33,7 @@ function buildHeaders(init?: HeadersInit): HeadersInit {
 export const api = {
   async get<T = unknown>(url: string): Promise<{ data: T }> {
     const res = await fetch(`${API_BASE}${url}`, { headers: buildHeaders() });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    if (!res.ok) throw await buildError(res);
     const data = (await res.json()) as T;
     return { data };
   },
@@ -35,7 +43,17 @@ export const api = {
       headers: buildHeaders(),
       body: body != null ? JSON.stringify(body) : undefined,
     });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    if (!res.ok) throw await buildError(res);
+    const data = (await res.json()) as T;
+    return { data };
+  },
+  async postForm<T = unknown>(url: string, form: Record<string, string>): Promise<{ data: T }> {
+    const res = await fetch(`${API_BASE}${url}`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+      body: new URLSearchParams(form).toString(),
+    });
+    if (!res.ok) throw await buildError(res);
     const data = (await res.json()) as T;
     return { data };
   },
@@ -45,7 +63,7 @@ export const api = {
       headers: buildHeaders(),
       body: body != null ? JSON.stringify(body) : undefined,
     });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    if (!res.ok) throw await buildError(res);
     const data = (await res.json()) as T;
     return { data };
   },
@@ -54,7 +72,7 @@ export const api = {
       method: 'DELETE',
       headers: buildHeaders(),
     });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    if (!res.ok) throw await buildError(res);
     const data = (await res.json()) as T;
     return { data };
   },
@@ -63,4 +81,20 @@ export const api = {
 // Initialize from localStorage (browser only)
 if (isBrowser) {
   try { setAuthToken(localStorage.getItem('token')); } catch {}
+}
+
+async function buildError(res: Response): Promise<Error> {
+  try {
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      const j = await res.json();
+      const msg = j?.detail || j?.message || `${res.status} ${res.statusText}`;
+      return new Error(msg);
+    } else {
+      const t = await res.text();
+      return new Error(t || `${res.status} ${res.statusText}`);
+    }
+  } catch {
+    return new Error(`${res.status} ${res.statusText}`);
+  }
 }

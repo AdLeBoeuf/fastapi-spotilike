@@ -6,7 +6,6 @@ from database import SessionLocal
 from models.album import Album
 from models.artist import Artist
 from schemas.album import AlbumCreate, AlbumResponse, AlbumWithArtistResponse
-from dependencies.auth import get_current_user
 from models.song import Song
 from schemas.song import SongCreate, SongResponse
 
@@ -65,7 +64,7 @@ def get_album(album_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=AlbumResponse, status_code=status.HTTP_201_CREATED)
-def create_album(payload: AlbumCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_album(payload: AlbumCreate, db: Session = Depends(get_db)):
     _assert_artist_exists(db, payload.artist_id)
     album = Album(**payload.dict())
     db.add(album)
@@ -75,7 +74,7 @@ def create_album(payload: AlbumCreate, db: Session = Depends(get_db), user=Depen
 
 
 @router.put("/{album_id}", response_model=AlbumResponse)
-def update_album(album_id: int, payload: AlbumCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def update_album(album_id: int, payload: AlbumCreate, db: Session = Depends(get_db)):
     album = db.query(Album).filter(Album.id == album_id).first()
     if not album:
         raise HTTPException(status_code=404, detail="Album introuvable")
@@ -88,7 +87,7 @@ def update_album(album_id: int, payload: AlbumCreate, db: Session = Depends(get_
 
 
 @router.delete("/{album_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_album(album_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def delete_album(album_id: int, db: Session = Depends(get_db)):
     album = db.query(Album).filter(Album.id == album_id).first()
     if not album:
         raise HTTPException(status_code=404, detail="Album introuvable")
@@ -107,7 +106,7 @@ def list_songs_of_album(album_id: int, db: Session = Depends(get_db), limit: int
 
 
 @router.post("/{album_id}/songs", response_model=SongResponse, status_code=status.HTTP_201_CREATED)
-def create_song_in_album(album_id: int, payload: SongCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_song_in_album(album_id: int, payload: SongCreate, db: Session = Depends(get_db)):
     album = db.query(Album).filter(Album.id == album_id).first()
     if not album:
         raise HTTPException(status_code=404, detail="Album introuvable")

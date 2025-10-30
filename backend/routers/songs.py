@@ -8,7 +8,7 @@ from models.artist import Artist
 from models.album import Album
 from schemas.song import SongCreate, SongResponse, SongWithNamesResponse
 from models.genre import Genre
-from dependencies.auth import get_current_user
+ 
 
 
 router = APIRouter(prefix="/api/songs", tags=["Songs"])
@@ -81,7 +81,7 @@ def get_song(song_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=SongResponse, status_code=status.HTTP_201_CREATED)
-def create_song(payload: SongCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_song(payload: SongCreate, db: Session = Depends(get_db)):
     _assert_fk_exists(db, payload.artist_id, payload.album_id)
     song = Song(**payload.dict())
     db.add(song)
@@ -91,7 +91,7 @@ def create_song(payload: SongCreate, db: Session = Depends(get_db), user=Depends
 
 
 @router.put("/{song_id}", response_model=SongResponse)
-def update_song(song_id: int, payload: SongCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def update_song(song_id: int, payload: SongCreate, db: Session = Depends(get_db)):
     song = db.query(Song).filter(Song.id == song_id).first()
     if not song:
         raise HTTPException(status_code=404, detail="Morceau introuvable")
@@ -104,7 +104,7 @@ def update_song(song_id: int, payload: SongCreate, db: Session = Depends(get_db)
 
 
 @router.delete("/{song_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_song(song_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def delete_song(song_id: int, db: Session = Depends(get_db)):
     song = db.query(Song).filter(Song.id == song_id).first()
     if not song:
         raise HTTPException(status_code=404, detail="Morceau introuvable")
@@ -168,7 +168,7 @@ def list_songs_by_album(album_id: int, db: Session = Depends(get_db), limit: int
 
 # Genre linking endpoints
 @router.post("/{song_id}/genres/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
-def add_genre_to_song(song_id: int, genre_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def add_genre_to_song(song_id: int, genre_id: int, db: Session = Depends(get_db)):
     song = db.query(Song).filter(Song.id == song_id).first()
     genre = db.query(Genre).filter(Genre.id == genre_id).first()
     if not song or not genre:
@@ -180,7 +180,7 @@ def add_genre_to_song(song_id: int, genre_id: int, db: Session = Depends(get_db)
 
 
 @router.delete("/{song_id}/genres/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_genre_from_song(song_id: int, genre_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def remove_genre_from_song(song_id: int, genre_id: int, db: Session = Depends(get_db)):
     song = db.query(Song).filter(Song.id == song_id).first()
     genre = db.query(Genre).filter(Genre.id == genre_id).first()
     if not song or not genre:

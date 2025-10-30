@@ -1,7 +1,9 @@
-<nav class="topbar">
+<nav class="topbar" *ngIf="auth">
   <a routerLink="/artists" routerLinkActive="active">Artists</a>
   <a routerLink="/albums" routerLinkActive="active">Albums</a>
   <a routerLink="/songs" routerLinkActive="active">Songs</a>
+  <span class="spacer"></span>
+  <button class="logout" (click)="onLogout()">Logout</button>
 </nav>
 <main class="page">
   <router-outlet />
@@ -12,4 +14,6 @@
   .topbar a { text-decoration: none; color: #333; font-weight: 600; }
   .topbar a.active { color: #1976d2; }
   .page { padding: 8px 0; }
+  .spacer { flex: 1; }
+  .logout { background: none; border: 1px solid #ddd; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
 </style>

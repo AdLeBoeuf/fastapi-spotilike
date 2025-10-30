@@ -5,7 +5,6 @@ from typing import List
 from database import SessionLocal
 from models.genre import Genre
 from schemas.genre import GenreCreate, GenreResponse
-from dependencies.auth import get_current_user
 
 
 router = APIRouter(prefix="/api/genres", tags=["Genres"])
@@ -33,7 +32,7 @@ def get_genre(genre_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=GenreResponse, status_code=status.HTTP_201_CREATED)
-def create_genre(payload: GenreCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_genre(payload: GenreCreate, db: Session = Depends(get_db)):
     genre = Genre(**payload.dict())
     db.add(genre)
     db.commit()
@@ -42,7 +41,7 @@ def create_genre(payload: GenreCreate, db: Session = Depends(get_db), user=Depen
 
 
 @router.put("/{genre_id}", response_model=GenreResponse)
-def update_genre(genre_id: int, payload: GenreCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def update_genre(genre_id: int, payload: GenreCreate, db: Session = Depends(get_db)):
     genre = db.query(Genre).filter(Genre.id == genre_id).first()
     if not genre:
         raise HTTPException(status_code=404, detail="Genre introuvable")
@@ -54,7 +53,7 @@ def update_genre(genre_id: int, payload: GenreCreate, db: Session = Depends(get_
 
 
 @router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_genre(genre_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def delete_genre(genre_id: int, db: Session = Depends(get_db)):
     genre = db.query(Genre).filter(Genre.id == genre_id).first()
     if not genre:
         raise HTTPException(status_code=404, detail="Genre introuvable")

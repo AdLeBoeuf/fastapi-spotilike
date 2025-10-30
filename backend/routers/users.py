@@ -5,8 +5,7 @@ from typing import List
 from database import SessionLocal
 from models.user import User
 from schemas.user import UserCreate, UserResponse
-from dependencies.auth import get_current_user
-from utils.security import hash_password
+# Plain CRUD without auth for now
 
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
@@ -34,10 +33,10 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(payload: UserCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter((User.username == payload.username) | (User.email == payload.email)).first():
         raise HTTPException(status_code=400, detail="Nom d'utilisateur ou email déjà utilisé")
-    new_user = User(username=payload.username, email=payload.email, password=hash_password(payload.password))
+    new_user = User(username=payload.username, email=payload.email, password=payload.password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -45,7 +44,7 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), user=Depends
 
 
 @router.put("/{user_id}", response_model=UserResponse)
-def update_user(user_id: int, payload: UserCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def update_user(user_id: int, payload: UserCreate, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
@@ -57,14 +56,14 @@ def update_user(user_id: int, payload: UserCreate, db: Session = Depends(get_db)
 
     user.username = payload.username
     user.email = payload.email
-    user.password = hash_password(payload.password)
+    user.password = payload.password
     db.commit()
     db.refresh(user)
     return user
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")

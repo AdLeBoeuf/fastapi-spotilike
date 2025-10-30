@@ -8,7 +8,6 @@ from schemas.artist import ArtistCreate, ArtistResponse
 from schemas.album import AlbumResponse
 from schemas.song import SongResponse, SongWithAlbumResponse
 from typing import List
-from dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/artists", tags=["Artists"])
 
@@ -35,7 +34,7 @@ def get_artist(artist_id: int, db: Session = Depends(get_db)):
 
 # 🟠 POST - Ajout d’un artiste
 @router.post("/", response_model=ArtistResponse, status_code=status.HTTP_201_CREATED)
-def create_artist(artist: ArtistCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_artist(artist: ArtistCreate, db: Session = Depends(get_db)):
     new_artist = Artist(**artist.dict())
     db.add(new_artist)
     db.commit()
@@ -44,7 +43,7 @@ def create_artist(artist: ArtistCreate, db: Session = Depends(get_db), user=Depe
 
 # 🔵 PUT - Modification d’un artiste
 @router.put("/{artist_id}", response_model=ArtistResponse)
-def update_artist(artist_id: int, updated_artist: ArtistCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def update_artist(artist_id: int, updated_artist: ArtistCreate, db: Session = Depends(get_db)):
     artist = db.query(Artist).filter(Artist.id == artist_id).first()
     if not artist:
         raise HTTPException(status_code=404, detail="Artiste non trouvé")
@@ -58,7 +57,7 @@ def update_artist(artist_id: int, updated_artist: ArtistCreate, db: Session = De
 
 # 🔴 DELETE - Suppression d’un artiste
 @router.delete("/{artist_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_artist(artist_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def delete_artist(artist_id: int, db: Session = Depends(get_db)):
     artist = db.query(Artist).filter(Artist.id == artist_id).first()
     if not artist:
         raise HTTPException(status_code=404, detail="Artiste non trouvé")

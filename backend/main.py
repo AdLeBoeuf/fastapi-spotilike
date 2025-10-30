@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 from models import artist, album, song, genre, user
-from routers import artists, albums, songs, genres, users, auth
-from routers.auth import alias_router as users_auth_router
+from routers import artists, albums, songs, genres, users
+from routers import simple_auth
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,7 +21,6 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:4200",
         "http://127.0.0.1:4200",
-        "*",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,8 +32,7 @@ app.include_router(albums.router)
 app.include_router(songs.router)
 app.include_router(genres.router)
 app.include_router(users.router)
-app.include_router(auth.router)
-app.include_router(users_auth_router)
+app.include_router(simple_auth.router)
 
 @app.get("/")
 def root():
